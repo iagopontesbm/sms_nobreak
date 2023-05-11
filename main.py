@@ -39,7 +39,7 @@ for i in range(messages, messages - n, -1):
 
             # printing the details
             print("From : ", From)
-            print("subject : ", subject)
+            print("subject : ", subject.decode("utf-8") )
 
 # TODO: Guardar status.
 
