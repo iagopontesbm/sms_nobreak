@@ -1,46 +1,48 @@
 import imaplib
 import email
+from email.header import decode_header
 import os
 
+# Leitura do id do ultimo email armazenado
+with open("email_id.txt") as data:
+    ultimo_email = int(data.read())
+
+print(ultimo_email)
+
 # TODO: Ler emails enviados,apenas suporte, dos dois nobreaks.
-# establish connection with Gmail
-server = "imap.gmail.com"
-imap = imaplib.IMAP4_SSL(server)
+# Criação conexão com Gmail via IMAP
+imap_ssl_host = 'imap.gmail.com'
+imap_ssl_port = 993
+username = "alertanobreakfloresta@gmail.com"  # user
+password = os.getenv("EMAIL_PASSWORD")  # password
+server = imaplib.IMAP4_SSL(imap_ssl_host, imap_ssl_port)
 
-# instantiate the username and the password
-username = "alertanobreakfloresta@gmail.com"
-password = os.getenv("EMAIL_PASSWORD")
 
-# login into the gmail account
-imap.login(username, password)
+# Login GMAIL
+server.login(username, password)
 
-# select the e-mails
-res, messages = imap.select('"[Gmail]/E-mails enviados"')
+# Seleção pasta para verificação
+server.select('"[Gmail]/E-mails enviados"')
+# Filtro de pesquisa dos email
+filtro_pesquisa = '(TO "suporte@fcisa.com.br" SUBJECT "Modo Bateria")'
+server.search("utf-8", filtro_pesquisa)
 
-# calculates the total number of sent messages
-print(messages[0])
-messages = int(messages[0])
+# Lista de mensagens
+status, data = server.search("utf-8", filtro_pesquisa)
+id_mensagens = [int(x.decode("utf-8")) for x in data[0].split()[-50:]]
+# print(status, data[0].split()[-5:])
+print(id_mensagens)
 
-# determine the number of e-mails to be fetched
-n = 3
+status_nobreak = False
 
-# iterating over the e-mails
-for i in range(messages, messages - n, -1):
-    res, msg = imap.fetch(str(i), "(RFC822)")
-    for response in msg:
-        if isinstance(response, tuple):
-            msg = email.message_from_bytes(response[1])
-
-            # getting the sender's mail id
-            From = msg["From"]
-
-            # getting the subject of the sent mail
-            subject = msg["Subject"]
-
-            # printing the details
-            print("From : ", From)
-            print("subject : ", subject.decode("utf-8") )
-
-# TODO: Guardar status.
+# Verificação se o id dos emails é maior que o ultimo_email, se sim altera status nobreak
+for id_mensagem in id_mensagens:
+    if id_mensagem > ultimo_email:
+        status_nobreak = True
+        # Armazenar id ultimo email
+        with open("email_id.txt", "w") as data:
+            data.write(str(id_mensagem))
 
 # TODO: Enviar SMS.
+if status_nobreak:
+    print("Enviar mensagem")

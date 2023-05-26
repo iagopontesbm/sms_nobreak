@@ -11,13 +11,13 @@ server = imaplib.IMAP4_SSL(imap_ssl_host, imap_ssl_port)
 
 server.login(username, password)
 server.select('"[Gmail]/E-mails enviados"')
-server.search("utf-8", '(TO "suporte@fcisa.com.br" SUBJECT "Modo Bateria")')
+# server.search("utf-8", '(TO "suporte@fcisa.com.br" SUBJECT "Modo Bateria")')
 
 status, data = server.search("utf-8", '(TO "suporte@fcisa.com.br" SUBJECT "Modo Bateria")')
 
 print(status, data[0].split()[-5:])
 
-id_mensagens = data[0].split()[-5:]
+id_mensagens = [x.decode("utf-8") for x in data[0].split()[-5:]]
 
 for num in id_mensagens:
     status, msg = server.fetch(num, '(RFC822)')
